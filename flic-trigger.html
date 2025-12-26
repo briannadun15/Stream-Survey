@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flic Trigger</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .message {
+      font-size: 24px;
+      font-weight: bold;
+      animation: pulse 0.5s ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .count {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="message">🐟 Fish counted!</div>
+    <div class="count" id="clickCount">1</div>
+    <div style="font-size: 14px;">Closing in <span id="countdown">3</span>s</div>
+  </div>
+  
+  <script>
+    let clickCount = 1;
+    let closeTimer;
+    let countdownInterval;
+    let countdownValue = 3;
+
+    // Increment count in localStorage
+    function registerClick() {
+      const currentQueue = localStorage.getItem('flicQueue') || '0';
+      const newCount = parseInt(currentQueue) + 1;
+      localStorage.setItem('flicQueue', newCount.toString());
+      localStorage.setItem('flicPress', Date.now().toString());
+      
+      clickCount++;
+      document.getElementById('clickCount').textContent = clickCount;
+      
+      // Reset close timer on each click
+      clearTimeout(closeTimer);
+      clearInterval(countdownInterval);
+      countdownValue = 3;
+      document.getElementById('countdown').textContent = countdownValue;
+      
+      startCloseTimer();
+    }
+
+    function startCloseTimer() {
+      // Update countdown
+      countdownInterval = setInterval(() => {
+        countdownValue--;
+        document.getElementById('countdown').textContent = countdownValue;
+        if (countdownValue <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Close after delay
+      closeTimer = setTimeout(() => {
+        clearInterval(countdownInterval);
+        window.close();
+        // Fallback if close doesn't work
+        setTimeout(() => {
+          const mainUrl = window.location.href.replace('flic-trigger.html', 'index.html');
+          window.location.href = mainUrl;
+        }, 100);
+      }, 3000);
+    }
+
+    // Register first click immediately
+    registerClick();
+
+    // Listen for additional clicks/taps on this page
+    let lastClickTime = 0;
+    document.addEventListener('click', (e) => {
+      const now = Date.now();
+      if (now - lastClickTime > 100) { // Debounce
+        lastClickTime = now;
+        registerClick();
+      }
+    });
+
+    // Also listen for keyboard events (in case Flic sends those)
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        registerClick();
+      }
+    });
+  </script>
+</body>
+</html>
